@@ -1,6 +1,6 @@
-import Fastify from "fastify";
+import Fastify, { FastifyReply } from "fastify";
 import dotenv from "dotenv";
-import { z } from "zod";
+import { z, ZodSafeParseResult } from "zod";
 import { randomUUID } from "node:crypto";
 
 const ProductBodySchema = z
@@ -25,8 +25,16 @@ const ProductSchema = z
   })
   .strict();
 
+const ParamsSchema = z
+  .object({
+    id: z.string().min(1),
+  })
+  .strict();
+
 type ProductBody = z.infer<typeof ProductBodySchema>;
 type Product = z.infer<typeof ProductSchema>;
+type ParamstId = z.infer<typeof ParamsSchema>;
+
 dotenv.config();
 
 const products: Product[] = [];
@@ -37,29 +45,53 @@ const server: Fastify.FastifyInstance = Fastify({
   logger: true,
 });
 
-server.get("/api/products", async (request, reply) => {
+server.get("/api/products", async (request, reply): Promise<FastifyReply>=> {
   return reply.send(products);
 });
 
-server.post("/api/products", async (request, reply):Promise<void> => {
-  const result = ProductBodySchema.safeParse(request.body);
-  if (!result.success) {
-    return reply.status(400).send({ message: "Invalid input" });
-  }
+server.get<{ Params: ParamstId }>(
+  "/api/products/:id",
+  async (request, reply): Promise<FastifyReply> => {
+    const { id } = request.params;
 
-  const newProduct: Product = {
-    id: randomUUID(),
-    name: result.data.name,
-    description: result.data.description,
-    price: result.data.price,
-    category: result.data.category,
-    inStock: result.data.inStock,
-  };
-  products.push(newProduct);
-  return reply.status(201).send(newProduct);
-});
+    const idResult: ZodSafeParseResult<string> = z
+      .uuid({ version: "v4" })
+      .safeParse(id);
+    if (!idResult.success) {
+      return reply.status(400).send({ message: "Invalid product id" });
+    }
+    const findProduct: Product | undefined = products.find(
+      (product: Product): boolean => product.id === id,
+    );
+    if (!findProduct) {
+      return reply.status(404).send({ message: "Product not found" });
+    }
+    return reply.send(findProduct);
+  },
+);
 
-const start = async () :Promise<void>=> {
+server.post<{ Body: ProductBody }>(
+  "/api/products",
+  async (request, reply): Promise<FastifyReply>=> {
+    const result = ProductBodySchema.safeParse(request.body);
+    if (!result.success) {
+      return reply.status(400).send({ message: "Invalid input" });
+    }
+
+    const newProduct: Product = {
+      id: randomUUID(),
+      name: result.data.name,
+      description: result.data.description,
+      price: result.data.price,
+      category: result.data.category,
+      inStock: result.data.inStock,
+    };
+    products.push(newProduct);
+    return reply.status(201).send(newProduct);
+  },
+);
+
+const start = async (): Promise<void> => {
   try {
     await server.listen({ port: PORT });
     console.log(`Сервер запущен на http://localhost:${PORT}`);
