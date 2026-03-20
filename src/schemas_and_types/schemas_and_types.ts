@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const ProductBodySchema = z
+export const ProductBodySchema = z
   .object({
     id: z.string().min(1).optional(),
     name: z.string().min(1),
@@ -28,6 +28,13 @@ const ParamsSchema = z
   })
   .strict();
 
+const ParamsDeleteSchema = z
+  .object({
+    productId: z.string().min(1),
+  })
+  .strict();
+
 export type ProductBody = z.infer<typeof ProductBodySchema>;
 export type Product = z.infer<typeof ProductSchema>;
-export type ParamstId = z.infer<typeof ParamsSchema>;
+export type ParamsId = z.infer<typeof ParamsSchema>;
+export type ParamsDelete = z.infer<typeof  ParamsDeleteSchema>;
