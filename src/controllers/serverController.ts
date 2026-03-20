@@ -6,9 +6,9 @@ import {
   ParamsId,
   ProductBody,
   ProductBodySchema,
-  ParamsDelete,
+  ParamsProduct,
 } from "../schemas_and_types/schemas_and_types.js";
-import { ERRORS, HTTP_STATUS} from "../constants/constants.js";
+import { ERRORS, HTTP_STATUS } from "../constants/constants.js";
 
 const products: Product[] = [];
 
@@ -67,7 +67,7 @@ export const postCreateNewProduct = async (
 };
 
 export const deleteProduct = async (
-  request: FastifyRequest<{ Params: ParamsDelete }>,
+  request: FastifyRequest<{ Params: ParamsProduct }>,
   reply: FastifyReply,
 ): Promise<FastifyReply> => {
   const { productId } = request.params;
@@ -81,7 +81,7 @@ export const deleteProduct = async (
   }
 
   const indexProduct: number = products.findIndex(
-    (product: Product):boolean => product.id === productId,
+    (product: Product): boolean => product.id === productId,
   );
   if (indexProduct === -1) {
     return reply
@@ -90,4 +90,43 @@ export const deleteProduct = async (
   }
   products.splice(indexProduct, 1);
   return reply.status(HTTP_STATUS.NO_CONTENT).send();
+};
+
+export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsProduct; Body: ProductBody }>, reply: FastifyReply) => {
+  const { productId } = request.params;
+  const idResult: ZodSafeParseResult<string> = z
+    .uuid({ version: "v4" })
+    .safeParse(productId);
+  if (!idResult.success) {
+    return reply
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .send({ message: ERRORS.INVALID_ID });
+  }
+
+  const indexProduct: number = products.findIndex(
+    (product: Product): boolean => product.id === productId,
+  );
+  if (indexProduct === -1) {
+    return reply
+      .status(HTTP_STATUS.NOT_FOUND)
+      .send({ message: ERRORS.NOT_FOUND });
+  }
+  const result = ProductBodySchema.safeParse(request.body);
+  if (!result.success) {
+    return reply
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .send({ message: ERRORS.INVALID_INPUT });
+  }
+  const updatedProduct: Product = {
+  id: productId,
+  name: result.data.name,
+  description: result.data.description,
+  price: result.data.price,
+  category: result.data.category,
+  inStock: result.data.inStock,
+};
+
+products[indexProduct] = updatedProduct;
+
+return reply.status(HTTP_STATUS.OK).send(updatedProduct);
 };

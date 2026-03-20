@@ -28,7 +28,7 @@ const ParamsSchema = z
   })
   .strict();
 
-const ParamsDeleteSchema = z
+const ParamsProductSchema = z
   .object({
     productId: z.string().min(1),
   })
@@ -37,4 +37,4 @@ const ParamsDeleteSchema = z
 export type ProductBody = z.infer<typeof ProductBodySchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ParamsId = z.infer<typeof ParamsSchema>;
-export type ParamsDelete = z.infer<typeof  ParamsDeleteSchema>;
+export type ParamsProduct = z.infer<typeof  ParamsProductSchema>;
