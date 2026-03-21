@@ -37,4 +37,4 @@ const ParamsProductSchema = z
 export type ProductBody = z.infer<typeof ProductBodySchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ParamsId = z.infer<typeof ParamsSchema>;
-export type ParamsProduct = z.infer<typeof  ParamsProductSchema>;
+export type ParamsProduct = z.infer<typeof ParamsProductSchema>;

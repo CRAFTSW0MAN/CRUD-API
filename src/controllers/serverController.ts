@@ -1,5 +1,4 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { randomUUID } from "node:crypto";
 import { z, ZodSafeParseResult } from "zod";
 import {
   Product,
@@ -9,14 +8,13 @@ import {
   ParamsProduct,
 } from "../schemas_and_types/schemas_and_types.js";
 import { ERRORS, HTTP_STATUS } from "../constants/constants.js";
-
-const products: Product[] = [];
+import { productRepository } from "../state/ProductRepository.js";
 
 export const getAllProducts = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<FastifyReply> => {
-  return reply.send(products);
+  return reply.send(productRepository.getAllProducts());
 };
 
 export const getOneProduct = async (
@@ -32,9 +30,7 @@ export const getOneProduct = async (
       .status(HTTP_STATUS.BAD_REQUEST)
       .send({ message: ERRORS.INVALID_ID });
   }
-  const findProduct: Product | undefined = products.find(
-    (product: Product): boolean => product.id === id,
-  );
+  const findProduct: Product | undefined = productRepository.findProduct(id);
   if (!findProduct) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
@@ -54,15 +50,7 @@ export const postCreateNewProduct = async (
       .send({ message: ERRORS.INVALID_INPUT });
   }
 
-  const newProduct: Product = {
-    id: randomUUID(),
-    name: result.data.name,
-    description: result.data.description,
-    price: result.data.price,
-    category: result.data.category,
-    inStock: result.data.inStock,
-  };
-  products.push(newProduct);
+  const newProduct: Product = productRepository.createNewProduct(result.data);
   return reply.status(HTTP_STATUS.CREATED).send(newProduct);
 };
 
@@ -80,19 +68,17 @@ export const deleteProduct = async (
       .send({ message: ERRORS.INVALID_ID });
   }
 
-  const indexProduct: number = products.findIndex(
-    (product: Product): boolean => product.id === productId,
-  );
+  const indexProduct: number = productRepository.findIndexProduct(productId);
   if (indexProduct === -1) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
       .send({ message: ERRORS.NOT_FOUND });
   }
-  products.splice(indexProduct, 1);
+  productRepository.deleteProduct(indexProduct)
   return reply.status(HTTP_STATUS.NO_CONTENT).send();
 };
 
-export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsProduct; Body: ProductBody }>, reply: FastifyReply) => {
+export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsProduct; Body: ProductBody }>, reply: FastifyReply): Promise<FastifyReply> => {
   const { productId } = request.params;
   const idResult: ZodSafeParseResult<string> = z
     .uuid({ version: "v4" })
@@ -103,9 +89,7 @@ export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsPro
       .send({ message: ERRORS.INVALID_ID });
   }
 
-  const indexProduct: number = products.findIndex(
-    (product: Product): boolean => product.id === productId,
-  );
+  const indexProduct: number = productRepository.findIndexProduct(productId);
   if (indexProduct === -1) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
@@ -117,16 +101,7 @@ export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsPro
       .status(HTTP_STATUS.BAD_REQUEST)
       .send({ message: ERRORS.INVALID_INPUT });
   }
-  const updatedProduct: Product = {
-  id: productId,
-  name: result.data.name,
-  description: result.data.description,
-  price: result.data.price,
-  category: result.data.category,
-  inStock: result.data.inStock,
-};
-
-products[indexProduct] = updatedProduct;
+  const updatedProduct: Product = productRepository.updateProductByIndex(result.data,indexProduct);
 
 return reply.status(HTTP_STATUS.OK).send(updatedProduct);
 };
