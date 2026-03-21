@@ -1,7 +1,7 @@
-import Fastify from "fastify";
+import Fastify, { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import dotenv from "dotenv";
 import serverRoutes from "./routes/serverRoutes.js";
-import { DEFAULT_PORT } from "./constants/constants.js";
+import { DEFAULT_PORT, ERRORS, HTTP_STATUS } from "./constants/constants.js";
 
 dotenv.config();
 
@@ -11,9 +11,22 @@ const server: Fastify.FastifyInstance = Fastify({
   logger: true,
 });
 
+server.setErrorHandler(
+  (
+    error: FastifyError,
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): FastifyReply => {
+    server.log.error(error);
+    return reply
+      .status(HTTP_STATUS.INTERNAL_ERROR)
+      .send({ message: ERRORS.INTERNAL_SERVER_ERROR });
+  },
+);
+
 server.register(serverRoutes);
 
-const start:() => Promise<void> = async (): Promise<void> => {
+const start: () => Promise<void> = async (): Promise<void> => {
   try {
     await server.listen({ port: PORT });
     console.log(`Сервер запущен на http://localhost:${PORT}`);

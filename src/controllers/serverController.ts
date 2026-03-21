@@ -74,11 +74,14 @@ export const deleteProduct = async (
       .status(HTTP_STATUS.NOT_FOUND)
       .send({ message: ERRORS.NOT_FOUND });
   }
-  productRepository.deleteProduct(indexProduct)
+  productRepository.deleteProduct(indexProduct);
   return reply.status(HTTP_STATUS.NO_CONTENT).send();
 };
 
-export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsProduct; Body: ProductBody }>, reply: FastifyReply): Promise<FastifyReply> => {
+export const updateProduct = async (
+  request: FastifyRequest<{ Params: ParamsProduct; Body: ProductBody }>,
+  reply: FastifyReply,
+): Promise<FastifyReply> => {
   const { productId } = request.params;
   const idResult: ZodSafeParseResult<string> = z
     .uuid({ version: "v4" })
@@ -101,7 +104,17 @@ export const updateProduct = async ( request: FastifyRequest<{ Params: ParamsPro
       .status(HTTP_STATUS.BAD_REQUEST)
       .send({ message: ERRORS.INVALID_INPUT });
   }
-  const updatedProduct: Product = productRepository.updateProductByIndex(result.data,indexProduct);
+  const updatedProduct: Product = productRepository.updateProductByIndex(
+    result.data,
+    indexProduct,
+  );
 
-return reply.status(HTTP_STATUS.OK).send(updatedProduct);
+  return reply.status(HTTP_STATUS.OK).send(updatedProduct);
+};
+
+export const notFoundRoutes = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<FastifyReply> => {
+  return reply.status(HTTP_STATUS.NOT_FOUND).send({ message: ERRORS.NOT_FOUND_ROUTE });
 };
