@@ -2,14 +2,15 @@ import {
   MasterToWorkerMessage,
   Product,
   ProductBody,
-  ResolverCreateAndUpdate,
+  ResolverCreate,
   ResolverDelete,
+  ResolverUpdate,
 } from "../schemas_and_types/schemas_and_types.js";
 import ProductRepository from "./ProductRepository.js";
 
 export class WorkerProxyRepository extends ProductRepository {
-  private pendingCreate: Map<string, ResolverCreateAndUpdate> = new Map();
-  private pendingUpdate: Map<string, ResolverCreateAndUpdate> = new Map();
+  private pendingCreate: Map<string, ResolverCreate> = new Map();
+  private pendingUpdate: Map<string, ResolverUpdate> = new Map();
   private pendingDelete: Map<string, ResolverDelete> = new Map();
   private requestIdCounter: number = 0;
 
@@ -21,7 +22,7 @@ export class WorkerProxyRepository extends ProductRepository {
       } else if (message.type === "UPDATE_DATA") {
         this.products = message.data;
       } else if (message.type === "CREATE_RESPONSE") {
-        const resolver: ResolverCreateAndUpdate = this.pendingCreate.get(
+        const resolver = this.pendingCreate.get(
           message.requestId,
         );
         if (resolver) {
@@ -29,9 +30,7 @@ export class WorkerProxyRepository extends ProductRepository {
           this.pendingCreate.delete(message.requestId);
         }
       } else if (message.type === "UPDATE_RESPONSE") {
-        const resolver: ResolverCreateAndUpdate = this.pendingUpdate.get(
-          message.requestId,
-        );
+        const resolver= this.pendingUpdate.get(message.requestId);
         if (resolver) {
           resolver(message.data);
           this.pendingUpdate.delete(message.requestId);
@@ -43,6 +42,12 @@ export class WorkerProxyRepository extends ProductRepository {
         if (resolver) {
           resolver(message.success);
           this.pendingDelete.delete(message.requestId);
+        }
+      } else if (message.type === "UPDATE_RESPONSE_ERROR") {  
+        const resolver= this.pendingUpdate.get(message.requestId);
+        if (resolver) {
+          resolver(null);                                    
+          this.pendingUpdate.delete(message.requestId);
         }
       }
     });

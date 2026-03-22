@@ -2,7 +2,7 @@ import cluster from "node:cluster";
 import { availableParallelism } from "node:os";
 import process from "node:process";
 import http from "node:http";
-import { DEFAULT_PORT, ERRORS, HTTP_STATUS} from "../constants/constants.js";
+import { DEFAULT_PORT, ERRORS, HTTP_STATUS } from "../constants/constants.js";
 import { createApp } from "../serverApp/serverApp.js";
 import ProductRepository from "../state/ProductRepository.js";
 import { WorkerProxyRepository } from "../state/WorkerProxyRepository.js";
@@ -71,12 +71,16 @@ if (cluster.isPrimary) {
 
   cluster.on(
     "message",
-    async (worker: cluster.Worker, message:WorkerToMasterMessage): Promise<void> => {
+    async (
+      worker: cluster.Worker,
+      message: WorkerToMasterMessage,
+    ): Promise<void> => {
       const { type, payload, requestId } = message;
       if (type === "CREATE") {
-        const newProduct:Product = await masterRepository.createNewProduct(payload);
+        const newProduct: Product =
+          await masterRepository.createNewProduct(payload);
         worker.send({ type: "CREATE_RESPONSE", data: newProduct, requestId });
-        const allProducts:Product[] = masterRepository.getAllProducts();
+        const allProducts: Product[] = masterRepository.getAllProducts();
         for (const w of workers) {
           w.worker.send({ type: "UPDATE_DATA", data: allProducts });
         }
@@ -85,13 +89,13 @@ if (cluster.isPrimary) {
         const updated = await masterRepository.updateById(id, productData);
         if (updated) {
           worker.send({ type: "UPDATE_RESPONSE", data: updated, requestId });
-          const allProducts:Product[] = masterRepository.getAllProducts();
+          const allProducts: Product[] = masterRepository.getAllProducts();
           for (const w of workers) {
             w.worker.send({ type: "UPDATE_DATA", data: allProducts });
           }
         } else {
           worker.send({
-            type: "UPDATE_RESPONSE",
+            type: "UPDATE_RESPONSE_ERROR",
             error: ERRORS.NOT_FOUND,
             requestId,
           });
@@ -101,7 +105,7 @@ if (cluster.isPrimary) {
         const deleted: boolean = await masterRepository.deleteById(id);
         if (deleted) {
           worker.send({ type: "DELETE_RESPONSE", success: true, requestId });
-          const allProducts:Product[] = masterRepository.getAllProducts();
+          const allProducts: Product[] = masterRepository.getAllProducts();
           for (const w of workers) {
             w.worker.send({ type: "UPDATE_DATA", data: allProducts });
           }

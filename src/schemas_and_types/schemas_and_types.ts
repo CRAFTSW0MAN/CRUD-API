@@ -46,13 +46,15 @@ export type ProductBody = z.infer<typeof ProductBodySchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ParamsId = z.infer<typeof ParamsSchema>;
 export type ParamsProduct = z.infer<typeof ParamsProductSchema>;
-export type ResolverCreateAndUpdate = ((result: Product) => void) | undefined;
+export type ResolverCreate = ((result: Product) => void) | undefined;
+export type ResolverUpdate = (result: Product | null) => void; 
 export type ResolverDelete = (result: boolean) => void;
 export type MasterToWorkerMessage =
   | { type: "INIT_DATA"; data: Product[] }
   | { type: "UPDATE_DATA"; data: Product[] }
   | { type: "CREATE_RESPONSE"; data: Product; requestId: string }
   | { type: "UPDATE_RESPONSE"; data: Product; requestId: string }
+  | { type: "UPDATE_RESPONSE_ERROR"; error: string; requestId: string }
   | { type: "DELETE_RESPONSE"; success: boolean; requestId: string };
 export type WorkerToMasterMessage =
   | { type: "CREATE"; payload: ProductBody; requestId: string }
