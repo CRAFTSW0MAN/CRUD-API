@@ -1,13 +1,12 @@
 import { z } from "zod";
 import ProductRepository from "../state/ProductRepository.js";
+import cluster from "node:cluster";
 
 declare module "fastify" {
   interface FastifyInstance {
     productRepository: ProductRepository;
   }
 }
-export type WorkerData = { pid: number; port: number };
-export type WorkersArr = WorkerData[];
 
 export const ProductBodySchema = z
   .object({
@@ -47,3 +46,20 @@ export type ProductBody = z.infer<typeof ProductBodySchema>;
 export type Product = z.infer<typeof ProductSchema>;
 export type ParamsId = z.infer<typeof ParamsSchema>;
 export type ParamsProduct = z.infer<typeof ParamsProductSchema>;
+export type ResolverCreateAndUpdate = ((result: Product) => void) | undefined;
+export type ResolverDelete = (result: boolean) => void;
+export type MasterToWorkerMessage =
+  | { type: "INIT_DATA"; data: Product[] }
+  | { type: "UPDATE_DATA"; data: Product[] }
+  | { type: "CREATE_RESPONSE"; data: Product; requestId: string }
+  | { type: "UPDATE_RESPONSE"; data: Product; requestId: string }
+  | { type: "DELETE_RESPONSE"; success: boolean; requestId: string };
+export type WorkerToMasterMessage =
+  | { type: "CREATE"; payload: ProductBody; requestId: string }
+  | {
+      type: "UPDATE";
+      payload: { id: string; productData: ProductBody };
+      requestId: string;
+    }
+  | { type: "DELETE"; payload: { id: string }; requestId: string };
+export type WorkerData = { worker: cluster.Worker; pid: number; port: number };

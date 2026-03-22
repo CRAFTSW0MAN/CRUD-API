@@ -50,7 +50,7 @@ export const postCreateNewProduct = async (
       .send({ message: ERRORS.INVALID_INPUT });
   }
 
-  const newProduct: Product = request.server.productRepository.createNewProduct(result.data);
+  const newProduct: Product = await request.server.productRepository.createNewProduct(result.data);
   return reply.status(HTTP_STATUS.CREATED).send(newProduct);
 };
 
@@ -59,22 +59,14 @@ export const deleteProduct = async (
   reply: FastifyReply,
 ): Promise<FastifyReply> => {
   const { productId } = request.params;
-  const idResult: ZodSafeParseResult<string> = z
-    .uuid({ version: "v4" })
-    .safeParse(productId);
+  const idResult = z.uuid({ version: 'v4' }).safeParse(productId);
   if (!idResult.success) {
-    return reply
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .send({ message: ERRORS.INVALID_ID });
+    return reply.status(HTTP_STATUS.BAD_REQUEST).send({ message: ERRORS.INVALID_ID });
   }
-
-  const indexProduct: number = request.server.productRepository.findIndexProduct(productId);
-  if (indexProduct === -1) {
-    return reply
-      .status(HTTP_STATUS.NOT_FOUND)
-      .send({ message: ERRORS.NOT_FOUND });
+  const deleted = await request.server.productRepository.deleteById(productId);
+  if (!deleted) {
+    return reply.status(HTTP_STATUS.NOT_FOUND).send({ message: ERRORS.NOT_FOUND });
   }
-  request.server.productRepository.deleteProduct(indexProduct);
   return reply.status(HTTP_STATUS.NO_CONTENT).send();
 };
 
@@ -83,33 +75,19 @@ export const updateProduct = async (
   reply: FastifyReply,
 ): Promise<FastifyReply> => {
   const { productId } = request.params;
-  const idResult: ZodSafeParseResult<string> = z
-    .uuid({ version: "v4" })
-    .safeParse(productId);
+  const idResult = z.uuid({ version: 'v4' }).safeParse(productId);
   if (!idResult.success) {
-    return reply
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .send({ message: ERRORS.INVALID_ID });
-  }
-
-  const indexProduct: number = request.server.productRepository.findIndexProduct(productId);
-  if (indexProduct === -1) {
-    return reply
-      .status(HTTP_STATUS.NOT_FOUND)
-      .send({ message: ERRORS.NOT_FOUND });
+    return reply.status(HTTP_STATUS.BAD_REQUEST).send({ message: ERRORS.INVALID_ID });
   }
   const result = ProductBodySchema.safeParse(request.body);
   if (!result.success) {
-    return reply
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .send({ message: ERRORS.INVALID_INPUT });
+    return reply.status(HTTP_STATUS.BAD_REQUEST).send({ message: ERRORS.INVALID_INPUT });
   }
-  const updatedProduct: Product = request.server.productRepository.updateProductByIndex(
-    result.data,
-    indexProduct,
-  );
-
-  return reply.status(HTTP_STATUS.OK).send(updatedProduct);
+  const updated = await request.server.productRepository.updateById(productId, result.data);
+  if (!updated) {
+    return reply.status(HTTP_STATUS.NOT_FOUND).send({ message: ERRORS.NOT_FOUND });
+  }
+  return reply.status(HTTP_STATUS.OK).send(updated);
 };
 
 export const notFoundRoutes = async (

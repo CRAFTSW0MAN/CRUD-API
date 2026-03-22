@@ -5,7 +5,7 @@ import {
 import { randomUUID } from "node:crypto";
 
 export default class ProductRepository {
-  private products: Product[] = [];
+  products: Product[] = [];
 
   getAllProducts(): Product[] {
     return this.products;
@@ -25,7 +25,7 @@ export default class ProductRepository {
     return indexProduct;
   }
 
-  createNewProduct(dataProduct: ProductBody): Product {
+  async createNewProduct(dataProduct: ProductBody): Promise<Product> {
     const newProduct: Product = {
       id: randomUUID(),
       name: dataProduct.name,
@@ -37,14 +37,19 @@ export default class ProductRepository {
     this.products.push(newProduct);
     return newProduct;
   }
-
-  deleteProduct(indexProduct: number): void {
-    this.products.splice(indexProduct, 1);
+  async deleteById(id: string): Promise<boolean> {
+    const index = this.findIndexProduct(id);
+    if (index === -1) return false;
+    this.products.splice(index, 1);
+    return true;
   }
-  updateProductByIndex(
+
+  async updateById(
+    id: string,
     dataProduct: ProductBody,
-    indexProduct: number,
-  ): Product {
+  ): Promise<Product | null> {
+    const indexProduct = this.findIndexProduct(id);
+    if (indexProduct === -1) return null;
     const updatedProduct: Product = {
       id: this.products[indexProduct].id,
       name: dataProduct.name,
@@ -53,6 +58,7 @@ export default class ProductRepository {
       category: dataProduct.category,
       inStock: dataProduct.inStock,
     };
+
     this.products[indexProduct] = updatedProduct;
     return updatedProduct;
   }
@@ -61,5 +67,3 @@ export default class ProductRepository {
     this.products = [];
   }
 }
-
-
