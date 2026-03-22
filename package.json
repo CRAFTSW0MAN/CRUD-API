@@ -11,7 +11,10 @@
   "scripts": {
     "start:dev": "tsx watch src/server.ts",
     "start:prod": "npm run build && node dist/server.js",
+    "start:cluster": "tsx watch src/clusters/cluster.ts",
     "build": "npm run clean && tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "repository": {
@@ -28,7 +31,8 @@
   "devDependencies": {
     "@types/node": "^25.5.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

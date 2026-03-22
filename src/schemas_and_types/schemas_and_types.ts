@@ -1,4 +1,13 @@
 import { z } from "zod";
+import ProductRepository from "../state/ProductRepository.js";
+
+declare module "fastify" {
+  interface FastifyInstance {
+    productRepository: ProductRepository;
+  }
+}
+export type WorkerData = { pid: number; port: number };
+export type WorkersArr = WorkerData[];
 
 export const ProductBodySchema = z
   .object({

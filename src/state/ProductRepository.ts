@@ -4,7 +4,7 @@ import {
 } from "../schemas_and_types/schemas_and_types.js";
 import { randomUUID } from "node:crypto";
 
-class ProductRepository {
+export default class ProductRepository {
   private products: Product[] = [];
 
   getAllProducts(): Product[] {
@@ -62,4 +62,4 @@ class ProductRepository {
   }
 }
 
-export const productRepository: ProductRepository = new ProductRepository();
+

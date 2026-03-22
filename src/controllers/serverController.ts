@@ -8,13 +8,13 @@ import {
   ParamsProduct,
 } from "../schemas_and_types/schemas_and_types.js";
 import { ERRORS, HTTP_STATUS } from "../constants/constants.js";
-import { productRepository } from "../state/ProductRepository.js";
+
 
 export const getAllProducts = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<FastifyReply> => {
-  return reply.send(productRepository.getAllProducts());
+  return reply.send(request.server.productRepository.getAllProducts());
 };
 
 export const getOneProduct = async (
@@ -30,7 +30,7 @@ export const getOneProduct = async (
       .status(HTTP_STATUS.BAD_REQUEST)
       .send({ message: ERRORS.INVALID_ID });
   }
-  const findProduct: Product | undefined = productRepository.findProduct(id);
+  const findProduct: Product | undefined = request.server.productRepository.findProduct(id);
   if (!findProduct) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
@@ -50,7 +50,7 @@ export const postCreateNewProduct = async (
       .send({ message: ERRORS.INVALID_INPUT });
   }
 
-  const newProduct: Product = productRepository.createNewProduct(result.data);
+  const newProduct: Product = request.server.productRepository.createNewProduct(result.data);
   return reply.status(HTTP_STATUS.CREATED).send(newProduct);
 };
 
@@ -68,13 +68,13 @@ export const deleteProduct = async (
       .send({ message: ERRORS.INVALID_ID });
   }
 
-  const indexProduct: number = productRepository.findIndexProduct(productId);
+  const indexProduct: number = request.server.productRepository.findIndexProduct(productId);
   if (indexProduct === -1) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
       .send({ message: ERRORS.NOT_FOUND });
   }
-  productRepository.deleteProduct(indexProduct);
+  request.server.productRepository.deleteProduct(indexProduct);
   return reply.status(HTTP_STATUS.NO_CONTENT).send();
 };
 
@@ -92,7 +92,7 @@ export const updateProduct = async (
       .send({ message: ERRORS.INVALID_ID });
   }
 
-  const indexProduct: number = productRepository.findIndexProduct(productId);
+  const indexProduct: number = request.server.productRepository.findIndexProduct(productId);
   if (indexProduct === -1) {
     return reply
       .status(HTTP_STATUS.NOT_FOUND)
@@ -104,7 +104,7 @@ export const updateProduct = async (
       .status(HTTP_STATUS.BAD_REQUEST)
       .send({ message: ERRORS.INVALID_INPUT });
   }
-  const updatedProduct: Product = productRepository.updateProductByIndex(
+  const updatedProduct: Product = request.server.productRepository.updateProductByIndex(
     result.data,
     indexProduct,
   );
